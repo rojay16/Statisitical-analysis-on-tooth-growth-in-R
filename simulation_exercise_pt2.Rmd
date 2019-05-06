@@ -1,0 +1,104 @@
+---
+title: "Part two"
+author: "Rohil"
+date: "February 19, 2019"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Basic Inferential Data Analysis
+
+1. Let us first look at a few exploratory charts
+```{r include=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+grouped_data<-group_by(ToothGrowth,supp,dose)
+a<-ggplot(grouped_data,aes(dose,len))+geom_point()+labs(title="Growth by dose for each supplement", ylab = "Length")+facet_grid(.~supp)
+a
+```
+
+Looking at the above chart it seems the median length for each dose with the OJ supplement, is higher than VC.
+
+```{r}
+a<-ggplot(grouped_data,aes(supp,len))+geom_point()+labs(title="Growth by for each supplement by dose", ylab = "Length")+facet_grid(.~dose)
+a
+```
+
+Again looking at the length, seperated by dose, we see the median of the length for OJ is higher than VS for each dose. We also see as the dose increases as does the median length for both supplements.
+
+2. Now we will do a quick summary of the data
+```{r}
+summarise(grouped_data,mean(len),sd(len),median(len))
+```
+
+We have calculated the mean, standard deviation and median for each combination of supplement and dose, and we see that indeed the OJ supplement has a higher length across the doses compared to VC. The standard deviation varies does not seem to show a pattern.
+
+3. There are several hypothesis tests we can do, first we can see if there is any difference in length between doses 0.5,1 and 2, for each supplement, then we can also see if there is any difference is length by supplements for by dose. Our null hypothesis for all these tests is that there is no difference in length. The alternative can either be the mean in difference is not equal to 0, or that the difference is in a specific direction.
+
+Thus now we split the data by dose and supplement.
+
+```{r}
+splitdata<-split(ToothGrowth,list(ToothGrowth$supp,ToothGrowth$dose))
+print(splitdata)
+```
+
+In the first t-test we llok at the difference in length for each supplement for a dose of 0.5, from the exploratory charts and the summary it seems that the length for OJ for 0.5 is greater than VC, hence we will used a one tail test to see if the the mean length for OJ is indeed greater than the mean length for VC. We will use a signifgance of 0.05 to reject the null hypothesis 
+
+
+```{r}
+t.test(splitdata[["OJ.0.5"]]$len,splitdata[["VC.0.5"]]$len, alternative=c("greater"))
+```
+
+Thus we see the p-values is 0.003, which suggests if the null hypothesis were true, our observation would be very unlikely, hence we reject it. Looking at the confidence interval we see it does not contain 0, hence again we reject the null hypothesis. Thus our t-test indicates that the mean legnth for the OJ suppliment is higher than the VC suppliment.
+
+Now we perform the same t-test, excpet for a dose of 1
+
+```{r}
+t.test(splitdata[["OJ.1"]]$len,splitdata[["VC.1"]]$len, alternative=c("greater"))
+```
+
+Again our p-value is far less than 0.05, so again we reject the null hypothesis and again this suggests the mean growth in OJ is better than VC.
+
+We now perfrom the t-test for a dose of 2, however from our exploratory charts and summary, the mean length is actually identical, so instead of a one-sided hyptohesis test, we will do a two-sided hypothesis test. 
+
+```{r}
+t.test(splitdata[["OJ.2"]]$len,splitdata[["VC.2"]]$len)
+```
+
+Here we see that the p-value is 0.9369, which suggests that the difference we see is highly likely given the null hypothesis. Hence we do not reject the null hypothesis, so for a dose of 2, there is no difference between the supliments.
+
+Now we do hypothesis tests for just dosage, here we test if there is any difference in length when the dosage is 0.5 vs 1, 1 vs 2 and 0.5 vs 2. First we split the data by dosage
+
+```{r}
+splitdata<-split(ToothGrowth,list(ToothGrowth$dose))
+print(splitdata)
+```
+
+Now we do a t.test for a dosage of 0.5 vs 1, from the exploratory data, we see that the mean length is higher for a dosage of 1, thus we will do a one-sided t-test where the alternate hypothesis is that the mean length of dose of 0.5 is less than 1
+
+```{r}
+t.test(splitdata[["0.5"]]$len,splitdata[["1"]]$len, alternative=c("less"))
+```
+
+The p-value for this is test is basically 0, thus this suggests we shoudl reject the null hypothesis, and the mean length from dosage 1 is higher than 0.5.
+
+Now we do the test for 1 vs 2.
+
+```{r}
+t.test(splitdata[["1"]]$len,splitdata[["2"]]$len, alternative=c("less"))
+```
+
+Again the p-value for this is test is basically 0, thus this suggests we shoudl reject the null hypothesis, and the mean length from dosage 2 is higher than 1.
+
+From the t-tests we have done we see that as we increase the dosage the mean length increase. We also see that for lower dosages OJ provides a higher mean length than VC, but for a dosage of 2, there seems to be no difference. Our assumptions to reach this conclusion is that the sample average will be distributed according to the central limit theorem and that the signifigance of 0.05 is a good threshold for these tests.
+
+
